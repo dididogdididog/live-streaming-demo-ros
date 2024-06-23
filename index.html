@@ -123,7 +123,7 @@
 
     #buttons {
       clear: both;
-      padding: 0 0 0 0;
+      padding-top:4px;
       text-align: center;
     }
 
@@ -133,12 +133,12 @@
       border: none;
       font-size: 16px;
       margin: 0 5px;
-      background-color: #7459fe;
-      color: #fff;
+      background-color: #ffffff;
+      color: #000000;
     }
 
     button:hover {
-      background-color: #9480ff;
+      background-color: #bcbcbc;
       cursor: pointer;
       transition: all 0.2s ease-out;
     }
@@ -157,40 +157,59 @@
       padding-bottom: 10px;
     }
 
-    video {
+    .video-container {
       width: 100vw;
       /* 使用整個視窗寬度 */
       height: 100vh;
       /* 使用整個視窗高度 */
+    }
+
+    #talk-video{
+      width:100%;
+      height: 100%;
       object-fit: contain;
-      /* 影片保持原始比例，完全顯示在容器中 */
-      object-position: center top;
-      /* 調整影片在容器中的位置，這裡設置為中間上方 */
+    }
+    #speak-checkbox{
+      background-color: #ffffff;
+      position: absolute;
+      bottom:70px;
+      left:calc(50vw + 400px);
+      width:100px;
+      height:100px;
+      transform: translate(-50%,50%);
+      border-radius: 50%;
+      border: 4px solid #ff0000;
+      appearance: none;
+      -webkit-appearance: none;
+      outline: none;
+      cursor: pointer;
+      transition: width 0.2s,height 0.2s;
+    }
+    #speak-checkbox:hover{
+      background-color: #dbdbdb;
+    }
+    #speak-checkbox:checked{
+      width:110px;
+      height:110px;
+      border: 6px solid #15ff00;
     }
   </style>
 </head>
 
 <body>
-  <!-- adde "id=content" -->
   <div id="content">
-    <!-- added "id=video-wrapper" -->
-    <!-- <div id="video-wrapper"> -->
-    <div>
+    <div class="video-container">
       <video id="talk-video" autoplay></video>
+      <input type="checkbox" id="speak-checkbox">
     </div>
-    <!-- </div> -->
-    <!-- <br /> -->
 
-    <!-- added div#buttons -->
     <div id="buttons">
       <button id="connect-button" type="button">Connect</button>
       <button id="talk-button" type="button">Start</button>
       <button id="destroy-button" type="button">Destroy</button>
     </div>
 
-    <!-- added div#status -->
     <div id="status">
-      <!-- removed the wrapping <div> tags -->
       ICE gathering status: <label id="ice-gathering-status-label"></label><br />
       ICE status: <label id="ice-status-label"></label><br />
       Peer connection status: <label id="peer-status-label"></label><br />
@@ -198,7 +217,7 @@
       Streaming status: <label id="streaming-status-label"></label><br />
     </div>
   </div>
-  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.js"></script>
   <script type="module" src="./index.js"></script>
 </body>
 

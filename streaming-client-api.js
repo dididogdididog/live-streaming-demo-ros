@@ -1,8 +1,6 @@
 'use strict';
 import DID_API from './api.json' with { type: "json" };
 
-const socket = io()
-
 if (DID_API.key == '🤫') alert('Please put your api key inside ./api.json and restart..');
 
 const RTCPeerConnection = (
@@ -75,6 +73,53 @@ connectButton.onclick = async () => {
   });
 };
 
+const connect=async()=>{
+  console.log("connect");
+  if (peerConnection && peerConnection.connectionState === 'connected') {
+    return;
+  }
+
+  stopAllStreams();
+  closePC();
+
+  const sessionResponse = await fetchWithRetries(`${DID_API.url}/talks/streams`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${DID_API.key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      source_url: 'https://raw.githubusercontent.com/Nathan110811/learn/main/yu1.jpg',
+      config: { stitch: true },
+    }),
+  });
+
+  const { id: newStreamId, offer, ice_servers: iceServers, session_id: newSessionId } = await sessionResponse.json();
+  streamId = newStreamId;
+  sessionId = newSessionId;
+
+  try {
+    sessionClientAnswer = await createPeerConnection(offer, iceServers);
+  } catch (e) {
+    console.log('error during streaming setup', e);
+    stopAllStreams();
+    closePC();
+    return;
+  }
+
+  const sdpResponse = await fetch(`${DID_API.url}/talks/streams/${streamId}/sdp`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${DID_API.key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      answer: sessionClientAnswer,
+      session_id: sessionId,
+    }),
+  });
+}
+
 const talkButton = document.getElementById('talk-button');
 talkButton.onclick = async () => {
   // connectionState not supported in firefox
@@ -104,9 +149,10 @@ talkButton.onclick = async () => {
   }
 };
 
-socket.on('hello', async (msg) => {
+
+export const speakMessage= async (msg)=>{
   // connectionState not supported in firefox
-  if (peerConnection?.signalingState === 'stable' || peerConnection?.iceConnectionState === 'connected') {
+  if (msg && (peerConnection?.signalingState === 'stable' || peerConnection?.iceConnectionState === 'connected')) {
     console.log('start')
     const talkResponse = await fetchWithRetries(`${DID_API.url}/talks/streams/${streamId}`, {
       method: 'POST',
@@ -132,7 +178,8 @@ socket.on('hello', async (msg) => {
     });
     console.log('end')
   }
-});
+}
+
 
 const destroyButton = document.getElementById('destroy-button');
 destroyButton.onclick = async () => {
@@ -185,6 +232,9 @@ function onConnectionStateChange() {
   // not supported in firefox
   peerStatusLabel.innerText = peerConnection.connectionState;
   peerStatusLabel.className = 'peerConnectionState-' + peerConnection.connectionState;
+  if(peerConnection.connectionState==='failed'){
+    connect();
+  }
 }
 function onSignalingStateChange() {
   signalingStatusLabel.innerText = peerConnection.signalingState;
@@ -217,6 +267,7 @@ function onTrack(event) {
    */
 
   if (!event.track) return;
+  if(statsIntervalId)clearInterval(statsIntervalId);
 
   statsIntervalId = setInterval(async () => {
     const stats = await peerConnection.getStats(event.track);
@@ -325,3 +376,5 @@ async function fetchWithRetries(url, options, retries = 1) {
     }
   }
 }
+
+window.onload=connect;
